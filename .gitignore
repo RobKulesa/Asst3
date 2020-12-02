@@ -1,5 +1,7 @@
 # Prerequisites
 *.d
+echos
+send
 
 # Object files
 *.o
