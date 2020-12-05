@@ -16,12 +16,12 @@ char* getResponse(struct connection* c) {
     int error, nread;
 
 	// find out the name and port of the remote host
-    error = getnameinfo((struct sockaddr *) &c->addr, c->addr_len, host, 100, port, 10, NI_NUMERICSERV);
-    if (error != 0) {
-        fprintf(stderr, "getnameinfo: %s", gai_strerror(error));
-        close(c->fd);
-        return NULL;
-    }
+    // error = getnameinfo((struct sockaddr *) &c->addr, c->addr_len, host, 100, port, 10, NI_NUMERICSERV);
+    // if (error != 0) {
+    //     fprintf(stderr, "getnameinfo: %s", gai_strerror(error));
+    //     close(c->fd);
+    //     return NULL;
+    // }
     
     char* input = NULL;
     while((nread = read(c->fd, buf, 100)) > 0) {
@@ -32,21 +32,20 @@ char* getResponse(struct connection* c) {
         } else {
             strcat(input, buf);
         }
+    //    printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
     }
-//    printf("[%s:%s] finished reading input as: %s\n", host, port, input);
-    // initialize error booleans
-    int ct, ln, ft;
+    //printf("[%s:%s] finished reading input as: %s\n", host, port, input);
+    
     // begin analysis on input
-    // seq1 contains 
-    int i;
-    char* seq1 = malloc(4);
+    
+    
     
     
     char* response;
     close(c->fd);
-    free(input);
+    //free(input);
     free(c);
-    return response;
+    return input;
 }
 
 
@@ -63,73 +62,54 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	// we need to provide some additional information to getaddrinfo using hints
-	// we don't know how big hints is, so we use memset to zero out all the fields
 	memset(&hints, 0, sizeof(hints));
-	
-	// indicate that we want any kind of address
-	// in practice, this means we are fine with IPv4 and IPv6 addresses
 	hints.ai_family = AF_UNSPEC;
-	
-	// we want a socket with read/write streams, rather than datagrams
 	hints.ai_socktype = SOCK_STREAM;
-
-	// get a list of all possible ways to connect to the host
-	// argv[1] - the remote host
-	// argv[2] - the service (by name, or a number given as a decimal string)
-	// hints   - our additional requirements
-	// address_list - the list of results
-
 	error = getaddrinfo(argv[1], argv[2], &hints, &address_list);
 	if (error) {
 		fprintf(stderr, "%s", gai_strerror(error));
 		exit(EXIT_FAILURE);
 	}
-
-	
-	// try each of the possible connection methods until we succeed
 	for (addr = address_list; addr != NULL; addr = addr->ai_next) {
-		// attempt to create the socket
 		sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-		
-		// if we somehow failed, try the next method
 		if (sock < 0) continue;
-		
-		// try to connect to the remote host using the socket
 		if (connect(sock, addr->ai_addr, addr->ai_addrlen) == 0) {
-			// we succeeded, so break out of the loop
 			break;
 		}
-
-		// we weren't able to connect; close the socket and try the next method		
 		close(sock);
 	}
-	
-	// if we exited the loop without opening a socket and connecting, halt
 	if (addr == NULL) {
 		fprintf(stderr, "Could not connect to %s:%s\n", argv[1], argv[2]);
 		exit(EXIT_FAILURE);
 	}
 	
-	// now that we have connected, we don't need the addressinfo list, so free it
-	freeaddrinfo(address_list);
 
 	// Read the knock knock from the server
 	con = malloc(sizeof(struct connection));
     con->addr_len = sizeof(struct sockaddr_storage);
+	//con->addr = (struct sockaddr_storage)(*(addr->ai_addr));
 	con->fd = sock;
-	char* response = getResponse(con);
-	if(response!=NULL)
-		printf("Response received: %s\n", response);
+	//char* response = getResponse(con);
+	char buf[100];
+	read(con->fd, buf, 100);
+	buf[14] = '\0';
+	//if(response!=NULL)
+		printf("Response received: %s\n", buf);
 	
-
+	
 	//Send |REG|12|Who's there?|
-	printf("Please send: |REG|12|Who's there?|\tIf you fail to do so, the server will send an error\n");
-	char* userInpt;
-	scanf("%s", userInpt);
-    
-	write(sock, userInpt, strlen(userInpt));
+	//char userInpt[100];
+	//scanf("%s", userInpt);
+    char* userInpt = "REG|12|Who's there?|";
 	
+	for(;;){
+		printf("Enter a message:\n");
+		fgets(buf, 100, stdin);
+    	send(con->fd, buf, strlen(buf), 0);
+	}
+
+		printf("Sending REG|12|Who's there?|\n");
+
 
 
 	//TIME FOR OUR OWN SHIT
@@ -137,6 +117,7 @@ int main(int argc, char **argv) {
 
 
 	// close the socket
+	freeaddrinfo(address_list);
 	close(sock);
 
 	return EXIT_SUCCESS;	
