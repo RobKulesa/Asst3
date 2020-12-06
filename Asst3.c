@@ -13,18 +13,20 @@
 #define ERRLENGTH 2
 #define ERRFORMAT 3
 #define ERRORMSG 4
-#define ERRBADMSG 5
 struct connection {
     struct sockaddr_storage addr;
     socklen_t addr_len;
     int fd;
 };
-
+char* setupLine = "Joe";
+char* setupLineWBars = "|Joe.|";
+char* punchLine = "|Joe Mama!|";
+int debug = 1;
 int server(char *port);
 void *echo(void *arg);
-char* getResponse(struct connection* c);
-int isGoodMessage(char* str);
-char* geterrstr(int err);
+char* getResponse(struct connection* c, int* msgCount);
+char* geterrstr(int err, int msgcount);
+int isGoodMessage(char* str, int msgCount);
 
 /*
  * ASS3 Server Algorithm
@@ -111,7 +113,7 @@ int server(char *port) {
     printf("Waiting for connection\n");
     
     //!AARONS TEST CODE STARTS HERE
-    struct sockaddr_storage address;
+    /* struct sockaddr_storage address;
     socklen_t address_len;
     int clientSFD;
     char buf1[100];
@@ -135,60 +137,39 @@ int server(char *port) {
             
             
         } 
-    }
+    } */
     
     //!AARONS TEST CODE ENDS HERE
-/*     for (;;) {
-    	// create argument struct for child thread
+    int msgCount = 0;
+    int lpCt = 0;
+    for (;;) {
+        msgCount = 0;
 		con = malloc(sizeof(struct connection));
         con->addr_len = sizeof(struct sockaddr_storage);
-        
-        // wait for an incoming connection
         con->fd = accept(sfd, (struct sockaddr *) &con->addr, &con->addr_len);
-        
-        // if we got back -1, it means something went wrong
         if (con->fd == -1) {
             perror("accept");
             continue;
         }
-        char* output;
-
-        getResponse(con);
-    } */
-
+        if(msgCount == 0){
+            printf("Sending KnockKnock\n");
+            char* kk = "REG|13|Knock, knock.|";
+            send(con->fd, kk, strlen(kk),0);
+        }
+        
+        
+        char* response;
+        for(lpCt = 0; lpCt < 4; lpCt++){
+            getResponse(con, &msgCount);
+        }
+        
+    }
     // never reach here
     return 0;
 }
 
-void *echo(void *arg) {
-    char host[100], port[10], buf[101];
-    struct connection *c = (struct connection *) arg;
-    int error, nread;
 
-	// find out the name and port of the remote host
-    error = getnameinfo((struct sockaddr *) &c->addr, c->addr_len, host, 100, port, 10, NI_NUMERICSERV);
-
-    if (error != 0) {
-        fprintf(stderr, "getnameinfo: %s", gai_strerror(error));
-        close(c->fd);
-        return NULL;
-    }
-
-    printf("[%s:%s] connection\n", host, port);
-
-    while ((nread = read(c->fd, buf, 100)) > 0) {
-        buf[nread] = '\0';
-        printf("[%s:%s] read %d bytes |%s|\n", host, port, nread, buf);
-    }
-
-    printf("[%s:%s] got EOF\n", host, port);
-
-    close(c->fd);
-    free(c);
-    return NULL;
-}
-
-char* getResponse(struct connection* c) {
+char* getResponse(struct connection* c, int* msgCount) {
     char host[100], port[10], buf[101];
     int error, nread;
 
@@ -201,7 +182,7 @@ char* getResponse(struct connection* c) {
     }
     
     char* input = NULL;
-    while((nread = read(c->fd, buf, 100)) > 0) {
+    while((nread = recv(c->fd, buf, 100, 0)) > 0) {
         buf[nread] = '\0';
         if(input == NULL) {
             input = malloc(strlen(buf)+1);
@@ -211,35 +192,75 @@ char* getResponse(struct connection* c) {
         }
     //    printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
     }
+    ++(*msgCount);
+    printf("{getResponse} msgCount is: %d\n", *msgCount);
     printf("{getResponse} [%s:%s] finished reading input as: %s\n", host, port, input);
     
     // begin analysis on input
-    error = isGoodMessage(input);
+    error = isGoodMessage(input, *msgCount);
     printf("{getResponse} input is code %d\n", error);
+    
+    char* response = NULL;
     if(error != 0) {
         if(error == ERRORMSG) {
             close(c->fd);
             free(input);
             free(c);
-            printf("{getResponse} received error msg from client! Exiting...");
-            return;
+            printf("{getResponse} Received error msg from client! Exiting...");
+            return response;
+        } else {
+            //send error msg and exit! make sure to free response!
+            response = geterrstr(error, *msgCount);
+            return response;
         }
     }
-    
-    char* response;
+    switch(*msgCount) {
+        case 1:
+            response = setupLineWBars;
+            return response;
+        case 2:
+            response = punchLine;
+            return response;
+        case 3:
+            //exit, client is done sending and we received valid A/D/S.
+            return response;
+        default:
+            break;
+    }
+
+    //!Need to get rid of this once we done
+    close(c->fd);
+    free(input);
+    free(c);
+    close(c->fd);
+    free(input);
+    free(c);
+    close(c->fd);
+    free(input);
+    free(c);
     close(c->fd);
     free(input);
     free(c);
     return response;
 }
 
-int isGoodMessage(char* str) {
+int isGoodMessage(char* str, int msgCount) {
     // seq1 should be REG or ERR, seq2 should be a positive integer, seq3 should be |string| of length seq2+2
+    int i;
+    int barCounter = 0;
+    for(i = 0; i < strlen(str); ++i) {
+        if(str[i] == '|') ++barCounter;
+        if(barCounter > 3) return ERRFORMAT;
+    }
+    
+    if(str[i-1] != '|') return ERRLENGTH;
+
     char* seq1 = malloc(5);
     memset(seq1, 'a', 5);
     seq1[4] = '\0';
     strncpy(seq1, str, strlen(seq1));
     printf("seq1, of length %ld, is: %s\n", strlen(seq1), seq1);
+
     if(strcmp(seq1, "ERR|") == 0) {
         return ERRORMSG;
     }
@@ -253,7 +274,7 @@ int isGoodMessage(char* str) {
                 break;
             } else {
                 free(seq1);
-                return ERRBADMSG;
+                return ERRFORMAT;
             }
         }
         char* seq2str = malloc(seq2len + 1);
@@ -262,7 +283,6 @@ int isGoodMessage(char* str) {
         strncpy(seq2str, &str[strlen(seq1)], strlen(seq2str));
         int seq2 = atoi(seq2str);
         printf("seq2 int is: %d\n", seq2);
-        
         
         char* seq3 = malloc(strlen(str) - strlen(seq1) - strlen(seq2str) + 1);
         memset(seq3, 'a', strlen(str) - strlen(seq1) - strlen(seq2str) + 1);
@@ -283,6 +303,34 @@ int isGoodMessage(char* str) {
         }
         free(seq1);
         free(seq2str);
+        //seq3 is the string with message content!
+        int err = 0;
+        switch(msgCount) {
+            case 1: //|Who's there?|
+                if(strcmp(seq3, "|Who's there?|") != 0) {
+                    free(seq3);
+                    return ERRCONTENT;
+                }
+                break;
+            case 2:
+                if(strcmp(seq3, "|Joe, who?|") != 0) {
+                    free(seq3);
+                    return ERRCONTENT;
+                }
+                break;
+            case 3:
+                if(strlen(seq3) < 4) {
+                    free(seq3);
+                    return ERRCONTENT;
+                }
+                if(seq3[strlen(seq3) - 2] != '.' && seq3[strlen(seq3) - 2] != '?' && seq3[strlen(seq3) - 2] != '!' ) {
+                    free(seq3);
+                    return ERRCONTENT;
+                }
+                break;
+            default:
+                break;   
+        }
         free(seq3);
         return GOODMSG;
     }
@@ -290,17 +338,42 @@ int isGoodMessage(char* str) {
     return ERRFORMAT;
 }
 
-char* geterrstr(int err) {
+char* geterrstr(int err, int msgcount) {
+    if(debug) printf("executing geterrstr");
+    char* errStr= (char*)malloc(5);
+    errStr[0] = 'M';
+    errStr[4] = '\0';
+    switch(msgcount){
+        case 1:
+            errStr[1] = '1'; break;
+        case 3:
+            errStr[1] = '3'; break;
+        case 5:
+            errStr[1] = '5'; break;
+        default:
+            errStr[1] = '7'; break;
+    }
     switch(err) {
         case ERRLENGTH:
-            return "LN";
+            //return "LN";
+            errStr[2] = 'L';
+            errStr[3] = 'N';
+            break;
         case ERRCONTENT:
-            return "CT";
+            //return "CT";
+            errStr[2] = 'C';
+            errStr[3] = 'T';
+            break;
         case ERRFORMAT:
-            return "FT";
-        case ERRBADMSG:
-            return "Invalid characters in string";
+            //return "FT";
+            errStr[2] = 'F';
+            errStr[3] = 'T';
+            break;
         default:
-            return NULL;
+            //return "FT";
+            errStr[2] = 'P';
+            errStr[3] = 'P';
+            break;
     }
+    return errStr;
 }

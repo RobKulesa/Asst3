@@ -12,8 +12,10 @@ struct connection {
 };
 
 char* getResponse(struct connection* c) {
-    char host[100], port[10], buf[101];
-    int error, nread;
+    //char host[100], port[10]
+	char buf[101];
+    //int error;
+	int nread;
 
 	// find out the name and port of the remote host
     // error = getnameinfo((struct sockaddr *) &c->addr, c->addr_len, host, 100, port, 10, NI_NUMERICSERV);
@@ -41,7 +43,7 @@ char* getResponse(struct connection* c) {
     
     
     
-    char* response;
+    //char* response;
     close(c->fd);
     //free(input);
     free(c);
@@ -54,7 +56,6 @@ int main(int argc, char **argv) {
 	struct addrinfo hints, *address_list, *addr;
 	int error;
 	int sock;
-	int i;
 	struct connection *con;
 	
 	if (argc < 4) {
@@ -91,26 +92,15 @@ int main(int argc, char **argv) {
 	con->fd = sock;
 	//char* response = getResponse(con);
 	char buf[100];
-	read(con->fd, buf, 100);
-	buf[14] = '\0';
-	//if(response!=NULL)
-		printf("Response received: %s\n", buf);
 	
-	
-	//Send |REG|12|Who's there?|
-	//char userInpt[100];
-	//scanf("%s", userInpt);
-    char* userInpt = "REG|12|Who's there?|";
 	
 	for(;;){
-		printf("Enter a message:\n");
-		fgets(buf, 100, stdin);
-    	send(con->fd, buf, strlen(buf), 0);
-	}
-
-		printf("Sending REG|12|Who's there?|\n");
-
-
+		recv(con->fd, buf, 100, 0);
+		printf("Received from server: %s\n", buf);
+		printf("Send message to server: \n");
+		scanf("%s", buf);
+		send(con->fd, buf, 100, 0);	
+		}
 
 	//TIME FOR OUR OWN SHIT
 	
