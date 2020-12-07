@@ -159,10 +159,19 @@ int server(char *port) {
         
         
         char* response;
-        for(lpCt = 0; lpCt < 4; lpCt++){
-            getResponse(con, &msgCount);
-        }
+        //printf("Message Count before calling getResponse is: %d\n", msgCount);
+        //response = getResponse(con, &msgCount);
+        //printf("Response is: %s and message count is %d\n", response, msgCount);
         
+        for(lpCt = 0; lpCt < 4; lpCt++){
+            response = getResponse(con, &msgCount);
+            printf("Reponse is: %s\n", response);
+            if(response!=NULL){
+                send(con->fd, response, strlen(response), 0);
+                free(response);
+            }
+            
+        }
     }
     // never reach here
     return 0;
@@ -170,6 +179,7 @@ int server(char *port) {
 
 
 char* getResponse(struct connection* c, int* msgCount) {
+    printf("Calling getresponse\n");
     char host[100], port[10], buf[101];
     int error, nread;
 
@@ -182,7 +192,18 @@ char* getResponse(struct connection* c, int* msgCount) {
     }
     
     char* input = NULL;
-    while((nread = recv(c->fd, buf, 100, 0)) > 0) {
+
+    /*
+     * 
+     *     
+     */
+    //TODO: Under Construction
+
+    
+    
+    int barCount = 0;
+    while((barCount < 3 && (nread = recv(c->fd, buf, 1, 0)) > 0)) {
+        //if(debug) printf("nread: %d\n", nread);
         buf[nread] = '\0';
         if(input == NULL) {
             input = malloc(strlen(buf)+1);
@@ -190,7 +211,12 @@ char* getResponse(struct connection* c, int* msgCount) {
         } else {
             strcat(input, buf);
         }
-    //    printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
+        if(buf[0]=='|')
+            barCount++;
+        
+        //keep adding to buf to input until we get 3 bars
+        //then when we see 3rd bar 
+        //printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
     }
     ++(*msgCount);
     printf("{getResponse} msgCount is: %d\n", *msgCount);
@@ -206,7 +232,7 @@ char* getResponse(struct connection* c, int* msgCount) {
             close(c->fd);
             free(input);
             free(c);
-            printf("{getResponse} Received error msg from client! Exiting...");
+            printf("{getResponse} Received error msg from client! Exiting...\n");
             return response;
         } else {
             //send error msg and exit! make sure to free response!
@@ -214,6 +240,7 @@ char* getResponse(struct connection* c, int* msgCount) {
             return response;
         }
     }
+    //TODO: END OF CONSTRUCTION;
     switch(*msgCount) {
         case 1:
             response = setupLineWBars;
@@ -228,20 +255,15 @@ char* getResponse(struct connection* c, int* msgCount) {
             break;
     }
 
+
+    
     //!Need to get rid of this once we done
-    close(c->fd);
-    free(input);
-    free(c);
-    close(c->fd);
-    free(input);
-    free(c);
-    close(c->fd);
-    free(input);
-    free(c);
-    close(c->fd);
+    //close(c->fd);
     free(input);
     free(c);
     return response;
+
+
 }
 
 int isGoodMessage(char* str, int msgCount) {

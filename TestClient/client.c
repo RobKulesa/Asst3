@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
 		if (connect(sock, addr->ai_addr, addr->ai_addrlen) == 0) {
 			break;
 		}
+
 		close(sock);
 	}
 	if (addr == NULL) {
@@ -94,12 +95,23 @@ int main(int argc, char **argv) {
 	char buf[100];
 	
 	
+	int msgCount = 0;
 	for(;;){
 		recv(con->fd, buf, 100, 0);
 		printf("Received from server: %s\n", buf);
-		printf("Send message to server: \n");
-		scanf("%s", buf);
-		send(con->fd, buf, 100, 0);	
+
+		printf("Choose message to send to server server: \n\t1 ->REG|12|Who's there?|\n\t2 ->REG|9|Joe, who?|\n\t3 -> REG|3|EW!|\n");
+		scanf("%d", &msgCount);
+		switch(msgCount){
+			case 1: strcpy(buf, "REG|12|Who's there?|"); break;
+			case 2: strcpy(buf, "REG|9|Joe, who?|"); break;
+			case 3: strcpy(buf, "REG|3|EW!|"); break;
+			default: break;
+		}
+		
+		send(con->fd, buf, strlen(buf), 0);	
+		printf("Message [%s] has been sent\n", buf);
+		memset(buf, 0, 100);
 		}
 
 	//TIME FOR OUR OWN SHIT
