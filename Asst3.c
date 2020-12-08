@@ -24,7 +24,7 @@ char* completeSetUpLine = "REG|4|Joe.|";
 char* punchLine = "|Joe Mama!|";
 char* completePunchLine = "REG|9|Joe Mama!|";
 char* endStr = "end";
-int debug = 1;
+int debug = 0;
 int server(char *port);
 void *echo(void *arg);
 char* getResponse(struct connection* c, int* msgCount);
@@ -114,7 +114,7 @@ int server(char *port) {
     freeaddrinfo(address_list);
 
     // at this point sfd is bound and listening
-    printf("Waiting for connection\n");
+    if(debug) printf("Waiting for connection\n");
     int msgCount = 0;
     int lpCt = 0;
     for (;;) {
@@ -149,7 +149,7 @@ int server(char *port) {
                 b = response[1];
                 c = response[2];
                 free(response);
-                printf("a is: %c\tb is: %c\tc is %c\n", a , b, c);
+                if(debug) ("a is: %c\tb is: %c\tc is %c\n", a , b, c);
                 if(a == 'E' && b == 'R' && c == 'R'){
                     close(con->fd);
                     free(con);
@@ -170,7 +170,7 @@ int server(char *port) {
 }
 
 char* getResponse(struct connection* c, int* msgCount) {
-    printf("Calling getresponse\n");
+    if(debug) printf("Calling getresponse\n");
     char host[100], port[10], buf[101];
     int error, nread;
 
@@ -417,16 +417,16 @@ char* geterrstr(int err, int msgcount) {
             errStr[7] = 'P';
             break;
     }
-    printf("{errStr}: strlen is: %lu\terrStr: %s\n", strlen(errStr), errStr);
+    if(debug) printf("{errStr}: strlen is: %lu\terrStr: %s\n", strlen(errStr), errStr);
     return errStr;
 }
 
 int readErrorMessage(char* str){
     if(debug) printf("{readErrorMessage} was called: %s\n", str);
-    printf("{readErrorMessage}: Info: strlen: %lu\t str[4] = %c\n", strlen(str), str[4]);
-    printf("\tstr[5] = %c\tstr[8] = %c\n", str[5], str[8]);
+    if(debug) printf("{readErrorMessage}: Info: strlen: %lu\t str[4] = %c\n", strlen(str), str[4]);
+    if(debug) printf("\tstr[5] = %c\tstr[8] = %c\n", str[5], str[8]);
     if(strlen(str) != 9){
-        printf("{readErrorMessage} strlen was incorrect\n");
+        if(debug) printf("{readErrorMessage} strlen was incorrect\n");
     }   
     if(str[4]!= 'M' || !isdigit(str[5]) || str[8] != '|')
         return 0;
@@ -442,7 +442,7 @@ int readErrorMessage(char* str){
         printf("message %d format was broken\n", str[5] - '0');
         return 1;
     } else{
-        printf("Why are we here lmfao\n");
+        if(debug) printf("Why are we here lmfao\n");
         return 0;
     }
 }
