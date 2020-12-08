@@ -111,7 +111,14 @@ int main(int argc, char **argv) {
 			case 5: strcpy(buf, "er"); break;
 			case 6: strcpy(buf, "REG||12|Who's there?|"); break;
 			case 7: strcpy(buf, "REG|11|Who's there?|"); break;
-			case 8: strcpy(buf, "REG|12|Joe, who?|"); break;
+			case 8: strcpy(buf, "REG|12||Who's there?|"); break;
+			case 9: strcpy(buf, "REG|0||"); break;
+			case 10: strcpy(buf, "REG|1a|Who's there?|"); break;
+			case 11: strcpy(buf, "REG|12Who's there||"); break;
+			case 12: strcpy(buf, "REG|12|Who's there?|REG|9|Joe, who?|REG|3|EW!|"); break;
+			case 13: strcpy(buf, "REG|12|Who's there.|"); break;
+			
+			/*
 			case 9: strcpy(buf, "ERR|M0CT|"); break;
 			case 10: strcpy(buf, "ERR|M2CT|"); break;
 			case 11: strcpy(buf, "ERR|M4CT|"); break;
@@ -121,6 +128,7 @@ int main(int argc, char **argv) {
 			case 15: strcpy(buf, "ERR|M0FT|");break;
 			case 16: strcpy(buf, "ERR|M2FT|"); break;
 			case 17: strcpy(buf, "ERR|M4FT|"); break;
+			*/
 			default: break;
 		}
 		
