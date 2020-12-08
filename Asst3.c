@@ -147,6 +147,7 @@ int server(char *port) {
                 b = response[1];
                 c = response[2];
                 free(response);
+                printf("a is: %c\tb is: %c\tc is %c\n", a , b, c);
                 if(a == 'E' && b == 'R' && c == 'R'){
                     close(con->fd);
                     free(con);
@@ -197,7 +198,10 @@ char* getResponse(struct connection* c, int* msgCount) {
         error = ERRFORMAT;
         ++(*msgCount);
     } else{
-        while((barCount < 3 && (nread = recv(c->fd, buf, 1, 0)) > 0)) {
+        int maxBarCount = 2;
+        if((input[0] == 'R' && input[1] == 'E' && input[2]== 'G'))
+            maxBarCount++;
+        while((barCount < maxBarCount && (nread = recv(c->fd, buf, 1, 0)) > 0)) {
         //if(debug) printf("nread: %d\n", nread);
         buf[nread] = '\0';
         if(input == NULL) {
