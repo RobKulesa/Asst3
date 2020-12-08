@@ -416,7 +416,7 @@ char* geterrstr(int err, int msgcount) {
             errStr[7] = 'P';
             break;
     }
-    printf("{errStr}: strlen is: %d\terrStr: %s\n", strlen(errStr), errStr);
+    printf("{errStr}: strlen is: %lu\terrStr: %s\n", strlen(errStr), errStr);
     return errStr;
 }
 
@@ -424,11 +424,13 @@ int readErrorMessage(char* str){
     if(debug) printf("{readErrorMessage} was called: %s\n", str);
     printf("{readErrorMessage}: Info: strlen: %lu\t str[4] = %c\n", strlen(str), str[4]);
     printf("\tstr[5] = %c\tstr[8] = %c\n", str[5], str[8]);
-    if(strlen(str) != 9)
-        return 0;
+    if(strlen(str) != 9){
+        printf("{readErrorMessage} strlen was incorrect\n");
+    }
+        
     if(str[4]!= 'M' || !isdigit(str[5]) || str[8] == '|')
         return 0;
-    if(str[6]=='C' && str[7]== 'T'){
+    else if(str[6]=='C' && str[7]== 'T'){
         printf("message %d content was not correct\n", str[5] - '0');
         return 1;
     } else if(str[6] == 'L' && str[7]=='N'){
@@ -438,6 +440,7 @@ int readErrorMessage(char* str){
         printf("message %d format was broken\n", str[5] - '0');
         return 1;
     } else{
+        printf("Why are we here lmfao\n");
         return 0;
     }
 }
