@@ -231,7 +231,8 @@ char* getResponse(struct connection* c, int* msgCount) {
     char* response = NULL;
     if(error != 0) {
         if(error == ERRORMSG) {
-            if(readErrorMessage(input)){
+            if(!readErrorMessage(input)){
+                error = ERRFORMAT;
                 response = geterrstr(error, *msgCount);
             }
             close(c->fd);
@@ -426,9 +427,10 @@ int readErrorMessage(char* str){
     printf("\tstr[5] = %c\tstr[8] = %c\n", str[5], str[8]);
     if(strlen(str) != 9){
         printf("{readErrorMessage} strlen was incorrect\n");
-    }
-        
+    }   
     if(str[4]!= 'M' || !isdigit(str[5]) || str[8] != '|')
+        return 0;
+    else if(str[5]!= '0' && str[5]!= '1' && str[5]!= '2' && str[5]!= '3' && str[5]!= '4' && str[5]!= '5')
         return 0;
     else if(str[6]=='C' && str[7]== 'T'){
         printf("message %d content was not correct\n", str[5] - '0');
