@@ -192,6 +192,7 @@ char* getResponse(struct connection* c, int* msgCount) {
     }
     if(debug) printf("i is: %d\n", i);
     if(i < 3 || !(buf[0] == 'R' && buf[1] == 'E' && buf[2]== 'G') || !(buf[0] == 'E' && buf[1] == 'R' && buf[2] == 'R')){
+        if(debug) printf("We made it here\n");
         error = ERRFORMAT;
         ++(*msgCount);
     } else{
