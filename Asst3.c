@@ -318,7 +318,7 @@ int isGoodMessage(char* str, int msgCount) {
         seq3[strlen(str) - strlen(seq1) - strlen(seq2str)] = '\0';
         if(debug) printf("Index set to nullterminator: %lu\n", strlen(str) - strlen(seq1) - strlen(seq2str));
         if(debug) printf("seq 3 is: %s\t before assignment &str[strlen(seq1) + strlen(seq2str)] is: %s\n", seq3, &str[strlen(seq1) + strlen(seq2str)]);
-        strncpy(seq3, &str[strlen(seq1) + strlen(seq2str)], seq2 + 2);
+        strncpy(seq3, &str[strlen(seq1) + strlen(seq2str)], strlen(str) - strlen(seq1) - strlen(seq2str));
         if(debug) printf("seq 3 is: %s\n", seq3);
         if(!(seq3[0] == '|' && seq3[strlen(seq3) - 1] == '|')) {
             free(seq1);
@@ -371,13 +371,14 @@ int isGoodMessage(char* str, int msgCount) {
 
 char* geterrstr(int err, int msgcount) {
     if(debug) printf("executing geterrstr");
-    char* errStr= (char*)malloc(9);
+    char* errStr= (char*)malloc(10);
     errStr[0] = 'E';
     errStr[1] = 'R';
     errStr[2] = 'R';
     errStr[3] = '|';
     errStr[4] = 'M';
-    errStr[8] = '\0';
+    errStr[8] = '|';
+    errStr[9] = '\0';
     switch(msgcount){
         case 1:
             errStr[5] = '1'; break;
