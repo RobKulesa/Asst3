@@ -411,6 +411,7 @@ char* geterrstr(int err, int msgcount) {
             errStr[7] = 'P';
             break;
     }
+    printf("{errStr}: strlen is: %d\terrStr: %s\n", strlen(errStr), errStr);
     return errStr;
 }
 
