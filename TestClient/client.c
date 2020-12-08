@@ -58,8 +58,8 @@ int main(int argc, char **argv) {
 	int sock;
 	struct connection *con;
 	
-	if (argc < 4) {
-		printf("Usage: %s [host] [port] [message(s)...]\n", argv[0]);
+	if (argc < 3) {
+		printf("Usage: %s [host] [port]\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -101,6 +101,7 @@ int main(int argc, char **argv) {
 		printf("Received from server: %s\n", buf);
 
 		printf("Choose message to send to server server: \n\t1 ->REG|12|Who's there?|\n\t2 ->REG|9|Joe, who?|\n\t3 -> REG|3|EW!|\n");
+		memset(buf, '\0', 100);
 		scanf("%d", &msgCount);
 		switch(msgCount){
 			case 1: strcpy(buf, "REG|12|Who's there?|"); break;

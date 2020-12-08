@@ -20,7 +20,9 @@ struct connection {
 };
 char* setupLine = "Joe";
 char* setupLineWBars = "|Joe.|";
+char* completeSetUpLine = "REG|4|Joe.|";
 char* punchLine = "|Joe Mama!|";
+char* completePunchLine = "REG|9|Joe Mama!|";
 int debug = 1;
 int server(char *port);
 void *echo(void *arg);
@@ -111,35 +113,6 @@ int server(char *port) {
 
     // at this point sfd is bound and listening
     printf("Waiting for connection\n");
-    
-    //!AARONS TEST CODE STARTS HERE
-    /* struct sockaddr_storage address;
-    socklen_t address_len;
-    int clientSFD;
-    char buf1[100];
-    for(;;){
-        address_len = sizeof(struct sockaddr_storage);
-        clientSFD = accept(sfd, (struct sockaddr*) &address, &address_len);
-        if(clientSFD == -1){
-            perror("accept");
-            continue;
-        } else{
-             //TODO: SEND KNOCK KNOCK BY USING THE SOCKETFD WE UST GOT
-            char* kk = "Knock, knock.";
-            send(clientSFD, kk, strlen(kk),0);
-            printf("We want to receive buf now\n");
-
-            while(recv(clientSFD, buf1, 99,0)>0){
-                printf("Received: %s", buf1);
-    
-            }
-	        
-            
-            
-        } 
-    } */
-    
-    //!AARONS TEST CODE ENDS HERE
     int msgCount = 0;
     int lpCt = 0;
     for (;;) {
@@ -163,7 +136,7 @@ int server(char *port) {
         //response = getResponse(con, &msgCount);
         //printf("Response is: %s and message count is %d\n", response, msgCount);
         
-        for(lpCt = 0; lpCt < 4; lpCt++){
+        for(lpCt = 0; lpCt < 3; lpCt++){
             response = getResponse(con, &msgCount);
             printf("Reponse is: %s\n", response);
             if(response!=NULL){
@@ -172,6 +145,8 @@ int server(char *port) {
             }
             
         }
+        close(con->fd);
+        free(con);
     }
     // never reach here
     return 0;
@@ -216,7 +191,7 @@ char* getResponse(struct connection* c, int* msgCount) {
         
         //keep adding to buf to input until we get 3 bars
         //then when we see 3rd bar 
-        //printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
+        printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
     }
     ++(*msgCount);
     printf("{getResponse} msgCount is: %d\n", *msgCount);
@@ -231,27 +206,35 @@ char* getResponse(struct connection* c, int* msgCount) {
         if(error == ERRORMSG) {
             close(c->fd);
             free(input);
-            free(c);
+            //!free(c);
             printf("{getResponse} Received error msg from client! Exiting...\n");
             return response;
         } else {
             //send error msg and exit! make sure to free response!
             response = geterrstr(error, *msgCount);
+            free(input);
+            //!free(c);
             return response;
         }
     }
     //TODO: END OF CONSTRUCTION;
     switch(*msgCount) {
         case 1:
-            response = setupLineWBars;
-            return response;
+            response = malloc(sizeof(completeSetUpLine)+1);
+            strcpy(response, completeSetUpLine);
+            //return response;
+            break;
         case 2:
-            response = punchLine;
-            return response;
+            response = malloc(sizeof(completePunchLine)+1);
+            strcpy(response, completePunchLine);
+            //return response;
+            break;
         case 3:
             //exit, client is done sending and we received valid A/D/S.
-            return response;
+            //return response;
+            break;
         default:
+            response = NULL;
             break;
     }
 
@@ -260,13 +243,14 @@ char* getResponse(struct connection* c, int* msgCount) {
     //!Need to get rid of this once we done
     //close(c->fd);
     free(input);
-    free(c);
+    //!free(c);
     return response;
 
 
 }
 
 int isGoodMessage(char* str, int msgCount) {
+    printf("{isGoodMessage}: str is: %s\n", str);
     // seq1 should be REG or ERR, seq2 should be a positive integer, seq3 should be |string| of length seq2+2
     int i;
     int barCounter = 0;
@@ -284,6 +268,7 @@ int isGoodMessage(char* str, int msgCount) {
     printf("seq1, of length %ld, is: %s\n", strlen(seq1), seq1);
 
     if(strcmp(seq1, "ERR|") == 0) {
+        free(seq1);
         return ERRORMSG;
     }
     if(strcmp(seq1, "REG|") == 0) {
@@ -307,9 +292,13 @@ int isGoodMessage(char* str, int msgCount) {
         printf("seq2 int is: %d\n", seq2);
         
         char* seq3 = malloc(strlen(str) - strlen(seq1) - strlen(seq2str) + 1);
+        printf("strlen(str): %lu\tstrlen(seq1): %lu\tstrlen(seq2str): %lu\n", strlen(str), strlen(seq1), strlen(seq2str));
         memset(seq3, 'a', strlen(str) - strlen(seq1) - strlen(seq2str) + 1);
         seq3[strlen(str) - strlen(seq1) - strlen(seq2str)] = '\0';
+        printf("Index set to nullterminator: %lu\n", strlen(str) - strlen(seq1) - strlen(seq2str));
+        printf("seq 3 is: %s\t before assignment &str[strlen(seq1) + strlen(seq2str)] is: %s\n", seq3, &str[strlen(seq1) + strlen(seq2str)]);
         strncpy(seq3, &str[strlen(seq1) + strlen(seq2str)], seq2 + 2);
+        printf("seq 3 is: %s\n", seq3);
         if(!(seq3[0] == '|' && seq3[strlen(seq3) - 1] == '|')) {
             free(seq1);
             free(seq2str);
