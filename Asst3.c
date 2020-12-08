@@ -421,6 +421,9 @@ char* geterrstr(int err, int msgcount) {
 }
 
 int readErrorMessage(char* str){
+    if(debug) printf("{readErrorMessage} was called: %s\n", str);
+    printf("{readErrorMessage}: Info: strlen: %lu\t str[4] = %c\n");
+    printf("\tstr[5] = %c\tstr[8] = %c\n", str[5], str[8]);
     if(strlen(str) != 9)
         return 0;
     if(str[4]!= 'M' || !isdigit(str[5]) || str[8] == '|')
