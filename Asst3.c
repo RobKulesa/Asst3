@@ -29,6 +29,7 @@ void *echo(void *arg);
 char* getResponse(struct connection* c, int* msgCount);
 char* geterrstr(int err, int msgcount);
 int isGoodMessage(char* str, int msgCount);
+int readErrorMessage(char* str);
 
 /*
  * ASS3 Server Algorithm
@@ -125,7 +126,7 @@ int server(char *port) {
             continue;
         }
         if(msgCount == 0){
-            printf("Sending KnockKnock\n");
+            if(debug) printf("Sending KnockKnock\n");
             char* kk = "REG|13|Knock, knock.|";
             send(con->fd, kk, strlen(kk),0);
         }
@@ -138,10 +139,21 @@ int server(char *port) {
         
         for(lpCt = 0; lpCt < 3; lpCt++){
             response = getResponse(con, &msgCount);
-            printf("Reponse is: %s\n", response);
+            if(debug) printf("Reponse is: %s\n", response);
             if(response!=NULL){
                 send(con->fd, response, strlen(response), 0);
+                char a, b, c;
+                a = response[0];
+                b = response[1];
+                c = response[2];
                 free(response);
+                if(a == 'E' && b == 'R' && c == 'R'){
+                    close(con->fd);
+                    free(con);
+                    return;
+                }
+            } else {
+
             }
             
         }
@@ -151,7 +163,6 @@ int server(char *port) {
     // never reach here
     return 0;
 }
-
 
 char* getResponse(struct connection* c, int* msgCount) {
     printf("Calling getresponse\n");
@@ -167,17 +178,23 @@ char* getResponse(struct connection* c, int* msgCount) {
     }
     
     char* input = NULL;
-
-    /*
-     * 
-     *     
-     */
-    //TODO: Under Construction
-
-    
-    
     int barCount = 0;
-    while((barCount < 3 && (nread = recv(c->fd, buf, 1, 0)) > 0)) {
+    int i;
+    for(i = 0; i < 3 && (nread = recv(c->fd, buf, 1, 0) > 0); i++){
+        //if(debug) printf("nread: %d\n", nread);
+        buf[nread] = '\0';
+        if(input == NULL) {
+            input = malloc(strlen(buf)+1);
+            strcpy(input, buf);
+        } else {
+            strcat(input, buf);
+        }
+    }
+    if(i < 3 || !(buf[0] == 'R' && buf[1] == 'E' && buf[2]== 'G') || !(buf[0] == 'E' && buf[1] == 'R' && buf[2] == 'R')){
+        error = ERRFORMAT;
+        ++(*msgCount);
+    } else{
+        while((barCount < 3 && (nread = recv(c->fd, buf, 1, 0)) > 0)) {
         //if(debug) printf("nread: %d\n", nread);
         buf[nread] = '\0';
         if(input == NULL) {
@@ -188,36 +205,35 @@ char* getResponse(struct connection* c, int* msgCount) {
         }
         if(buf[0]=='|')
             barCount++;
-        
-        //keep adding to buf to input until we get 3 bars
-        //then when we see 3rd bar 
-        printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
+        if(debug) printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
+        }
+        ++(*msgCount);
+        if(debug) printf("{getResponse} msgCount is: %d\n", *msgCount);
+        if(debug) printf("{getResponse} [%s:%s] finished reading input as: %s\n", host, port, input);
+        error = isGoodMessage(input, *msgCount);
     }
-    ++(*msgCount);
-    printf("{getResponse} msgCount is: %d\n", *msgCount);
-    printf("{getResponse} [%s:%s] finished reading input as: %s\n", host, port, input);
     
     // begin analysis on input
-    error = isGoodMessage(input, *msgCount);
-    printf("{getResponse} input is code %d\n", error);
+    
+    if(debug) printf("{getResponse} input is code %d\n", error);
     
     char* response = NULL;
     if(error != 0) {
         if(error == ERRORMSG) {
+            if(readErrorMessage(input)){
+                response = geterrstr(error, *msgCount);
+            }
             close(c->fd);
             free(input);
-            //!free(c);
-            printf("{getResponse} Received error msg from client! Exiting...\n");
+            if(debug) printf("{getResponse} Received error msg from client! Exiting...\n");
             return response;
         } else {
             //send error msg and exit! make sure to free response!
             response = geterrstr(error, *msgCount);
             free(input);
-            //!free(c);
             return response;
         }
     }
-    //TODO: END OF CONSTRUCTION;
     switch(*msgCount) {
         case 1:
             response = malloc(sizeof(completeSetUpLine)+1);
@@ -237,20 +253,14 @@ char* getResponse(struct connection* c, int* msgCount) {
             response = NULL;
             break;
     }
-
-
-    
-    //!Need to get rid of this once we done
-    //close(c->fd);
     free(input);
-    //!free(c);
     return response;
 
 
 }
 
 int isGoodMessage(char* str, int msgCount) {
-    printf("{isGoodMessage}: str is: %s\n", str);
+    if(debug) printf("{isGoodMessage}: str is: %s\n", str);
     // seq1 should be REG or ERR, seq2 should be a positive integer, seq3 should be |string| of length seq2+2
     int i;
     int barCounter = 0;
@@ -265,7 +275,7 @@ int isGoodMessage(char* str, int msgCount) {
     memset(seq1, 'a', 5);
     seq1[4] = '\0';
     strncpy(seq1, str, strlen(seq1));
-    printf("seq1, of length %ld, is: %s\n", strlen(seq1), seq1);
+    if(debug) printf("seq1, of length %ld, is: %s\n", strlen(seq1), seq1);
 
     if(strcmp(seq1, "ERR|") == 0) {
         free(seq1);
@@ -289,23 +299,23 @@ int isGoodMessage(char* str, int msgCount) {
         seq2str[seq2len] = '\0';
         strncpy(seq2str, &str[strlen(seq1)], strlen(seq2str));
         int seq2 = atoi(seq2str);
-        printf("seq2 int is: %d\n", seq2);
+        if(debug) printf("seq2 int is: %d\n", seq2);
         
         char* seq3 = malloc(strlen(str) - strlen(seq1) - strlen(seq2str) + 1);
-        printf("strlen(str): %lu\tstrlen(seq1): %lu\tstrlen(seq2str): %lu\n", strlen(str), strlen(seq1), strlen(seq2str));
+        if(debug) printf("strlen(str): %lu\tstrlen(seq1): %lu\tstrlen(seq2str): %lu\n", strlen(str), strlen(seq1), strlen(seq2str));
         memset(seq3, 'a', strlen(str) - strlen(seq1) - strlen(seq2str) + 1);
         seq3[strlen(str) - strlen(seq1) - strlen(seq2str)] = '\0';
-        printf("Index set to nullterminator: %lu\n", strlen(str) - strlen(seq1) - strlen(seq2str));
-        printf("seq 3 is: %s\t before assignment &str[strlen(seq1) + strlen(seq2str)] is: %s\n", seq3, &str[strlen(seq1) + strlen(seq2str)]);
+        if(debug) printf("Index set to nullterminator: %lu\n", strlen(str) - strlen(seq1) - strlen(seq2str));
+        if(debug) printf("seq 3 is: %s\t before assignment &str[strlen(seq1) + strlen(seq2str)] is: %s\n", seq3, &str[strlen(seq1) + strlen(seq2str)]);
         strncpy(seq3, &str[strlen(seq1) + strlen(seq2str)], seq2 + 2);
-        printf("seq 3 is: %s\n", seq3);
+        if(debug) printf("seq 3 is: %s\n", seq3);
         if(!(seq3[0] == '|' && seq3[strlen(seq3) - 1] == '|')) {
             free(seq1);
             free(seq2str);
             free(seq3);
             return ERRFORMAT;
         }
-        printf("seq3, of length %ld, is: %s\n", strlen(seq3), seq3);
+        if(debug) printf("seq3, of length %ld, is: %s\n", strlen(seq3), seq3);
         if(strlen(seq3) != seq2 + 2) {
             free(seq1);
             free(seq2str);
@@ -351,40 +361,63 @@ int isGoodMessage(char* str, int msgCount) {
 
 char* geterrstr(int err, int msgcount) {
     if(debug) printf("executing geterrstr");
-    char* errStr= (char*)malloc(5);
-    errStr[0] = 'M';
-    errStr[4] = '\0';
+    char* errStr= (char*)malloc(9);
+    errStr[0] = 'E';
+    errStr[1] = 'R';
+    errStr[2] = 'R';
+    errStr[3] = '|';
+    errStr[4] = 'M';
+    errStr[8] = '\0';
     switch(msgcount){
         case 1:
-            errStr[1] = '1'; break;
+            errStr[5] = '1'; break;
         case 3:
-            errStr[1] = '3'; break;
+            errStr[5] = '3'; break;
         case 5:
-            errStr[1] = '5'; break;
+            errStr[5] = '5'; break;
         default:
-            errStr[1] = '7'; break;
+            errStr[5] = '7'; break;
     }
     switch(err) {
         case ERRLENGTH:
             //return "LN";
-            errStr[2] = 'L';
-            errStr[3] = 'N';
+            errStr[6] = 'L';
+            errStr[7] = 'N';
             break;
         case ERRCONTENT:
             //return "CT";
-            errStr[2] = 'C';
-            errStr[3] = 'T';
+            errStr[6] = 'C';
+            errStr[7] = 'T';
             break;
         case ERRFORMAT:
             //return "FT";
-            errStr[2] = 'F';
-            errStr[3] = 'T';
+            errStr[6] = 'F';
+            errStr[7] = 'T';
             break;
         default:
             //return "FT";
-            errStr[2] = 'P';
-            errStr[3] = 'P';
+            errStr[6] = 'P';
+            errStr[7] = 'P';
             break;
     }
     return errStr;
+}
+
+int readErrorMessage(char* str){
+    if(strlen(str) != 9)
+        return 0;
+    if(str[4]!= 'M' || !isdigit(str[5]) || )
+        return 0;
+    if(str[6]=='C' && str[7]== 'T'){
+        printf("message %d content was not correct\n", atoi(str[5]));
+        return 1;
+    } else if(str[6] == 'L' && str[7]=='N'){
+        printf("message %d length value was incorrect\n", atoi(str[5]));
+        return 1;
+    }else if(str[6] == 'F' && str[7]=='T'){
+        printf("message %d format was broken\n", atoi(str[5]));
+        return 1;
+    } else{
+        return 0;
+    }
 }
