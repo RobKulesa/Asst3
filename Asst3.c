@@ -23,6 +23,7 @@ char* setupLineWBars = "|Joe.|";
 char* completeSetUpLine = "REG|4|Joe.|";
 char* punchLine = "|Joe Mama!|";
 char* completePunchLine = "REG|9|Joe Mama!|";
+char* endStr = "end";
 int debug = 1;
 int server(char *port);
 void *echo(void *arg);
@@ -141,7 +142,8 @@ int server(char *port) {
             response = getResponse(con, &msgCount);
             if(debug) printf("Reponse is: %s\n", response);
             if(response!=NULL){
-                send(con->fd, response, strlen(response), 0);
+                if(strcmp(endStr, response)!=0)
+                    send(con->fd, response, strlen(response), 0);
                 char a, b, c;
                 a = response[0];
                 b = response[1];
@@ -255,8 +257,8 @@ char* getResponse(struct connection* c, int* msgCount) {
             //return response;
             break;
         case 3:
-            //exit, client is done sending and we received valid A/D/S.
-            //return response;
+            response = malloc(sizeof(endStr)+1);
+            strcpy(response, endStr);
             break;
         default:
             response = NULL;
