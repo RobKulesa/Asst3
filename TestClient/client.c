@@ -123,8 +123,10 @@ int main(int argc, char **argv) {
 			case 17: strcpy(buf, "ERR|N0CT|"); break;
 			case 18: strcpy(buf, "ERR|M2CT|"); break;
 			case 19: strcpy(buf, "REG|12|Who's there?|a");break;
-			case 20: strcpy(buf, "REG|2|Yy|");
-			case 21: strcpy(buf, "REG|2|!!|");
+			case 20: strcpy(buf, "REG|2|Yy|"); break;
+			case 21: strcpy(buf, "REG|2|!!|"); break;
+			case 22: strcpy(buf, "REG|1|!|"); break;
+			case 23: strcpy(buf, "REG|1|y|"); break;			
 			/*
 			
 			case 10: strcpy(buf, "ERR|M2CT|"); break;

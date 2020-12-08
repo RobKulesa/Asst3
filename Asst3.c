@@ -360,7 +360,7 @@ int isGoodMessage(char* str, int msgCount) {
                     free(seq3);
                     return ERRCONTENT;
                 }
-                if(seq3[strlen(seq3) - 2] != '.' && seq3[strlen(seq3) - 2] != '?' && seq3[strlen(seq3) - 2] != '!' ) {
+                if((strlen(seq3) <= 3) || (seq3[strlen(seq3) - 2] != '.' && seq3[strlen(seq3) - 2] != '?' && seq3[strlen(seq3) - 2] != '!' )) {
                     free(seq3);
                     return ERRCONTENT;
                 }
