@@ -111,16 +111,16 @@ int main(int argc, char **argv) {
 			case 5: strcpy(buf, "er"); break;
 			case 6: strcpy(buf, "REG||12|Who's there?|"); break;
 			case 7: strcpy(buf, "REG|11|Who's there?|"); break;
-			case 8: strcpy(buf, "REG|12|Joe, who?|");
-			case 9: strcpy(buf, "ERR|M0CT|");
-			case 10: strcpy(buf, "ERR|M2CT|");
-			case 11: strcpy(buf, "ERR|M4CT|");
-			case 12: strcpy(buf, "ERR|M0LN|");
-			case 13: strcpy(buf, "ERR|M2LN|");
-			case 14: strcpy(buf, "ERR|M4LN|");
-			case 15: strcpy(buf, "ERR|M0FT|");
-			case 16: strcpy(buf, "ERR|M2FT|");
-			case 17: strcpy(buf, "ERR|M4FT|");
+			case 8: strcpy(buf, "REG|12|Joe, who?|"); break;
+			case 9: strcpy(buf, "ERR|M0CT|"); break;
+			case 10: strcpy(buf, "ERR|M2CT|"); break;
+			case 11: strcpy(buf, "ERR|M4CT|"); break;
+			case 12: strcpy(buf, "ERR|M0LN|"); break;
+			case 13: strcpy(buf, "ERR|M2LN|"); break;
+			case 14: strcpy(buf, "ERR|M4LN|"); break;
+			case 15: strcpy(buf, "ERR|M0FT|");break;
+			case 16: strcpy(buf, "ERR|M2FT|"); break;
+			case 17: strcpy(buf, "ERR|M4FT|"); break;
 			default: break;
 		}
 		
