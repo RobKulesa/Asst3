@@ -150,7 +150,7 @@ int server(char *port) {
                 if(a == 'E' && b == 'R' && c == 'R'){
                     close(con->fd);
                     free(con);
-                    return;
+                    return 0;
                 }
             } else {
 
@@ -325,7 +325,6 @@ int isGoodMessage(char* str, int msgCount) {
         free(seq1);
         free(seq2str);
         //seq3 is the string with message content!
-        int err = 0;
         switch(msgCount) {
             case 1: //|Who's there?|
                 if(strcmp(seq3, "|Who's there?|") != 0) {
@@ -409,13 +408,13 @@ int readErrorMessage(char* str){
     if(str[4]!= 'M' || !isdigit(str[5]) || )
         return 0;
     if(str[6]=='C' && str[7]== 'T'){
-        printf("message %d content was not correct\n", atoi(str[5]));
+        printf("message %d content was not correct\n", str[5] - '0');
         return 1;
     } else if(str[6] == 'L' && str[7]=='N'){
-        printf("message %d length value was incorrect\n", atoi(str[5]));
+        printf("message %d length value was incorrect\n", str[5] - '0');
         return 1;
     }else if(str[6] == 'F' && str[7]=='T'){
-        printf("message %d format was broken\n", atoi(str[5]));
+        printf("message %d format was broken\n", str[5] - '0');
         return 1;
     } else{
         return 0;
