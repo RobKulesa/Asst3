@@ -428,7 +428,7 @@ int readErrorMessage(char* str){
         printf("{readErrorMessage} strlen was incorrect\n");
     }
         
-    if(str[4]!= 'M' || !isdigit(str[5]) || str[8] == '|')
+    if(str[4]!= 'M' || !isdigit(str[5]) || str[8] != '|')
         return 0;
     else if(str[6]=='C' && str[7]== 'T'){
         printf("message %d content was not correct\n", str[5] - '0');
