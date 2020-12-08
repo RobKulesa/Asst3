@@ -154,7 +154,9 @@ int server(char *port) {
                     return 0;
                 }
             } else {
-
+                close(con->fd);
+                free(con);
+                return 0;
             }
             
         }
