@@ -189,6 +189,7 @@ char* getResponse(struct connection* c, int* msgCount) {
         } else {
             strcat(input, buf);
         }
+        if(debug) printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
     }
     if(debug) printf("i is: %d\tbuf[0] = %c\tbuf[1] = %c\tbuf[2] = %c\n", i, buf[0], buf[1], buf[2]);
     if(i < 3 || !(buf[0] == 'R' && buf[1] == 'E' && buf[2]== 'G') || !(buf[0] == 'E' && buf[1] == 'R' && buf[2] == 'R')){
