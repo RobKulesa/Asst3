@@ -149,7 +149,7 @@ int server(char *port) {
                 b = response[1];
                 c = response[2];
                 free(response);
-                if(debug) ("a is: %c\tb is: %c\tc is %c\n", a , b, c);
+                if(debug) printf("a is: %c\tb is: %c\tc is %c\n", a , b, c);
                 if(a == 'E' && b == 'R' && c == 'R'){
                     close(con->fd);
                     free(con);
