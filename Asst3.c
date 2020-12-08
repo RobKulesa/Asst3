@@ -311,6 +311,11 @@ int isGoodMessage(char* str, int msgCount) {
         strncpy(seq2str, &str[strlen(seq1)], strlen(seq2str));
         int seq2 = atoi(seq2str);
         if(debug) printf("seq2 int is: %d\n", seq2);
+        if(seq2 < 1){
+            free(seq1);
+            free(seq2str);
+            return ERRFORMAT;
+        }
         
         char* seq3 = malloc(strlen(str) - strlen(seq1) - strlen(seq2str) + 1);
         if(debug) printf("strlen(str): %lu\tstrlen(seq1): %lu\tstrlen(seq2str): %lu\n", strlen(str), strlen(seq1), strlen(seq2str));
