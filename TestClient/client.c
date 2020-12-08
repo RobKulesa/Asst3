@@ -121,6 +121,7 @@ int main(int argc, char **argv) {
 			case 15: strcpy(buf, "ERR|MMCT|"); break;
 			case 16: strcpy(buf, "ERR|M0NT|"); break;
 			case 17: strcpy(buf, "ERR|N0CT|"); break;
+			case 18: strcpy(buf, "ERR|M2CT|"); break;
 			/*
 			
 			case 10: strcpy(buf, "ERR|M2CT|"); break;
