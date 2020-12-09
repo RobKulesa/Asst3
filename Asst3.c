@@ -114,7 +114,7 @@ int server(char *port) {
     freeaddrinfo(address_list);
 
     // at this point sfd is bound and listening
-    if(debug) printf("Waiting for connection\n");
+    printf("Waiting for connection\n");
     int msgCount = 0;
     int lpCt = 0;
     for (;;) {
@@ -148,14 +148,18 @@ int server(char *port) {
                 a = response[0];
                 b = response[1];
                 c = response[2];
-                free(response);
                 if(debug) printf("a is: %c\tb is: %c\tc is %c\n", a , b, c);
-                if(a == 'E' && b == 'R' && c == 'R'){
+                if(a == 'E' && b == 'R' && c == 'R') {
+                    printf("Sending error message (shutting down...): %s\n", response);
+                    shutdown(con->fd, SHUT_RDWR);
                     close(con->fd);
+                    free(response);
                     free(con);
                     return 0;
                 }
+                free(response);
             } else {
+                printf("Connection closed by remote host (shutting down...)\n");
                 close(con->fd);
                 free(con);
                 return 0;
@@ -195,6 +199,9 @@ char* getResponse(struct connection* c, int* msgCount) {
             strcat(input, buf);
         }
         if(debug) printf("\t[%s:%s] got partial input as: %s\n", host, port, input);
+    }
+    if(input == NULL) {
+        return NULL;
     }
     if(debug) printf("i is: %d\tinput[0] = %c\tinput[1] = %c\tinput[2] = %c\n", i, input[0], input[1], input[2]);
     if(i < 3 && !(input[0] == 'R' && input[1] == 'E' && input[2]== 'G') && !(input[0] == 'E' && input[1] == 'R' && input[2] == 'R')){
@@ -237,7 +244,7 @@ char* getResponse(struct connection* c, int* msgCount) {
             }
             close(c->fd);
             free(input);
-            if(debug) printf("{getResponse} Received error msg from client! Exiting...\n");
+            printf("Received error msg from client! Shutting down...\n");
             return response;
         } else {
             //send error msg and exit! make sure to free response!
@@ -388,12 +395,12 @@ char* geterrstr(int err, int msgcount) {
     switch(msgcount){
         case 1:
             errStr[5] = '1'; break;
-        case 3:
+        case 2:
             errStr[5] = '3'; break;
-        case 5:
+        case 3:
             errStr[5] = '5'; break;
         default:
-            errStr[5] = '7'; break;
+            errStr[5] = 'e'; break;
     }
     switch(err) {
         case ERRLENGTH:

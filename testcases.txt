@@ -1,0 +1,48 @@
+Case 1 (Expected Behavior):
+    0) Server waits for connection...
+    0) Server receives connection
+    1) Server sends "REG|13|Knock, knock?|"
+    1) Server receives "REG|12|Who's there?|"
+    2) Server sends "REG|4|Joe.|"
+    2) Server receives "REG|9|Joe, who?|"
+    3) Server sends "REG|9|Joe Mama!|"
+    3) Server receives "REG|3|EW!|"
+    FIN) Server shuts down...
+
+Case 2 (Unexpected Shutdown Behavior):
+    0) Server waits for connection...
+    0) Server receives connection
+    1) Server sends "REG|13|Knock, knock?|"
+    1) Server receives "REG|12|Who's there?|"
+    2) Client shuts down connection unexpectedly without sending an error msg
+    FIN) Server shuts down...
+
+Case 3 (Length Error Behavior):
+    0) Server waits for connection...
+    0) Server receives connection
+    1) Server sends "REG|13|Knock, knock?|"
+    1) Server receives "REG|13|Who's there?|"
+    2) Server sends "ERR|M1LN|"
+    FIN) Server shuts down...
+
+Case 4 (Content Error Behavior):
+    0) Server waits for connection...
+    0) Server receives connection
+    1) Server sends "REG|13|Knock, knock?|"
+    1) Server receives "REG|12|Who's there?|"
+    2) Server sends "REG|4|Joe.|"
+    2) Server receives "REG|10|Joe,  who?|"
+    3) Server sends "ERR|M3CT|"
+    FIN) Server shuts down...
+
+Case 5 (Format Error Behavior):
+    0) Server waits for connection...
+    0) Server receives connection
+    1) Server sends "REG|13|Knock, knock?|"
+    1) Server receives "REG|12|Who's there?|"
+    2) Server sends "REG|4|Joe.|"
+    2) Server receives "REG|9|Joe, who?|"
+    3) Server sends "REG|9|Joe Mama!|"
+    3) Server receives "REE|3|EW!|"
+    4) Server sends "ERR|M5FT|"
+    FIN) Server shuts down...

@@ -126,7 +126,10 @@ int main(int argc, char **argv) {
 			case 20: strcpy(buf, "REG|2|Yy|"); break;
 			case 21: strcpy(buf, "REG|2|!!|"); break;
 			case 22: strcpy(buf, "REG|1|!|"); break;
-			case 23: strcpy(buf, "REG|1|y|"); break;			
+			case 23: strcpy(buf, "REG|1|y|"); break;
+			case 24: strcpy(buf, "REG|10|Joe,  who?|"); break;
+			case 25: strcpy(buf, ""); break;				
+			case 26: strcpy(buf, "REE|3|EW!|"); break;	
 			/*
 			
 			case 10: strcpy(buf, "ERR|M2CT|"); break;
